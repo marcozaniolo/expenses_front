@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expenses</title>
+
+<style>
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f2f2f7;
+  padding: 16px;
+}
+
+.card {
+  max-width: 420px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+}
+
+input, button, select {
+  width: 100%;
+  padding: 14px;
+  margin-top: 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
+button {
+  background: black;
+  color: white;
+}
+
+.secondary {
+  background: #ddd;
+  color: black;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: white;
+  padding: 16px;
+  display: none;
+  overflow-y: auto;
+}
+
+.modal.active {
+  display: block;
+}
+
+.list-item {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <input id="value" type="number" step="0.01" placeholder="Valor (R$)">
+  <input id="description" placeholder="Descrição">
+
+  <!-- Date -->
+  <button onclick="openDate()">Selecionar Data</button>
+  <div id="dateDisplay"></div>
+
+  <!-- Wallet -->
+  <select id="wallet">
+    <option value="">Carteira</option>
+  </select>
+
+  <!-- Category -->
+  <button onclick="openCategory()">Selecionar Categoria</button>
+  <div id="categoryDisplay"></div>
+
+  <button onclick="review()">Revisar</button>
+</div>
+
+<!-- CATEGORY MODAL -->
+<div id="categoryModal" class="modal">
+  <input id="search" placeholder="Buscar...">
+
+  <div id="categoryList"></div>
+
+  <button class="secondary" onclick="closeCategory()">Fechar</button>
+</div>
+
+<!-- DATE MODAL -->
+<div id="dateModal" class="modal">
+  <input type="date" id="datePicker">
+  <button onclick="confirmDate()">Confirmar</button>
+</div>
+
+<script>
+// ===== CONFIG =====
+const API_URL = "YOUR_API_URL_HERE";
+const SECRET_KEY = "YOUR_SECRET_KEY";
+
+// EDIT THESE
+const wallets = ["Conta 1", "Conta 2"];
+
+const categories = {
+  "Alimentação": ["Restaurante", "Mercado"],
+  "Transporte": ["Uber", "Combustível"]
+};
+
+// ===== INIT =====
+const walletSelect = document.getElementById("wallet");
+wallets.forEach(w => {
+  let opt = document.createElement("option");
+  opt.value = w;
+  opt.textContent = w;
+  walletSelect.appendChild(opt);
+});
+
+let selectedCategory = "";
+let selectedDate = new Date().toISOString().split("T")[0];
+
+document.getElementById("dateDisplay").innerText = selectedDate;
+
+// ===== CATEGORY =====
+function openCategory() {
+  document.getElementById("categoryModal").classList.add("active");
+  renderGroups();
+}
+
+function closeCategory() {
+  document.getElementById("categoryModal").classList.remove("active");
+}
+
+function renderGroups() {
+  const list = document.getElementById("categoryList");
+  list.innerHTML = "";
+
+  Object.keys(categories).forEach(group => {
+    let div = document.createElement("div");
+    div.className = "list-item";
+    div.textContent = group;
+    div.onclick = () => renderItems(group);
+    list.appendChild(div);
+  });
+}
+
+function renderItems(group) {
+  const list = document.getElementById("categoryList");
+  list.innerHTML = "";
+
+  categories[group].forEach(item => {
+    let div = document.createElement("div");
+    div.className = "list-item";
+    div.textContent = item;
+    div.onclick = () => {
+      selectedCategory = item;
+      document.getElementById("categoryDisplay").innerText = item;
+      closeCategory();
+    };
+    list.appendChild(div);
+  });
+}
+
+// SEARCH
+document.getElementById("search").addEventListener("input", e => {
+  let term = e.target.value.toLowerCase();
+  const list = document.getElementById("categoryList");
+  list.innerHTML = "";
+
+  Object.entries(categories).forEach(([group, items]) => {
+    items.forEach(item => {
+      if (item.toLowerCase().includes(term) || group.toLowerCase().includes(term)) {
+        let div = document.createElement("div");
+        div.className = "list-item";
+        div.textContent = `${group} → ${item}`;
+        div.onclick = () => {
+          selectedCategory = item;
+          document.getElementById("categoryDisplay").innerText = item;
+          closeCategory();
+        };
+        list.appendChild(div);
+      }
+    });
+  });
+});
+
+// ===== DATE =====
+function openDate() {
+  document.getElementById("dateModal").classList.add("active");
+}
+
+function confirmDate() {
+  selectedDate = document.getElementById("datePicker").value;
+  document.getElementById("dateDisplay").innerText = selectedDate;
+  document.getElementById("dateModal").classList.remove("active");
+}
+
+// ===== REVIEW =====
+function review() {
+  let value = parseFloat(document.getElementById("value").value);
+  let desc = document.getElementById("description").value;
+  let wallet = document.getElementById("wallet").value;
+
+  if (!value || value <= 0) return alert("Valor inválido");
+  if (!desc) return alert("Descrição obrigatória");
+  if (!selectedDate) return alert("Data obrigatória");
+  if (!selectedCategory) return alert("Categoria obrigatória");
+  if (!wallet) return alert("Carteira obrigatória");
+
+  fetch(API_URL, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      key: SECRET_KEY,
+      value,
+      description: desc,
+      date: selectedDate,
+      category: selectedCategory,
+      wallet
+    })
+  });
+
+  alert("Salvo!");
+}
+</script>
+
+</body>
+</html>
