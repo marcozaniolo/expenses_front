@@ -20,7 +20,7 @@ body {
   border-radius: 16px;
 }
 
-input, button, select {
+input, select, button {
   width: 100%;
   padding: 14px;
   margin-top: 12px;
@@ -45,17 +45,28 @@ button {
   width: 100%;
   height: 100%;
   background: white;
-  padding: 16px;
   display: none;
-  overflow-y: auto;
+  flex-direction: column;
 }
 
 .modal.active {
-  display: block;
+  display: flex;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
 }
 
 .list-item {
-  padding: 12px;
+  padding: 14px;
   border-bottom: 1px solid #eee;
 }
 </style>
@@ -68,9 +79,8 @@ button {
   <input id="value" type="number" step="0.01" placeholder="Valor (R$)">
   <input id="description" placeholder="Descrição">
 
-  <!-- Date -->
-  <button onclick="openDate()">Selecionar Data</button>
-  <div id="dateDisplay"></div>
+  <!-- Date inline -->
+  <input type="date" id="date">
 
   <!-- Wallet -->
   <select id="wallet">
@@ -81,22 +91,21 @@ button {
   <button onclick="openCategory()">Selecionar Categoria</button>
   <div id="categoryDisplay"></div>
 
-  <button onclick="review()">Revisar</button>
+  <button onclick="submit()">Salvar</button>
 </div>
 
 <!-- CATEGORY MODAL -->
-<div id="categoryModal" class="modal">
-  <input id="search" placeholder="Buscar...">
+<div id="modal" class="modal">
 
-  <div id="categoryList"></div>
+  <div class="modal-header">
+    <button class="secondary" onclick="goBack()">← Voltar</button>
+    <button class="secondary" onclick="closeModal()">Cancelar</button>
+  </div>
 
-  <button class="secondary" onclick="closeCategory()">Fechar</button>
-</div>
+  <input id="search" placeholder="Buscar..." style="margin:10px">
 
-<!-- DATE MODAL -->
-<div id="dateModal" class="modal">
-  <input type="date" id="datePicker">
-  <button onclick="confirmDate()">Confirmar</button>
+  <div id="list" class="modal-body"></div>
+
 </div>
 
 <script>
@@ -104,7 +113,7 @@ button {
 const API_URL = "YOUR_API_URL_HERE";
 const SECRET_KEY = "YOUR_SECRET_KEY";
 
-// EDIT THESE
+// EDIT
 const wallets = ["Conta 1", "Conta 2"];
 
 const categories = {
@@ -115,52 +124,66 @@ const categories = {
 // ===== INIT =====
 const walletSelect = document.getElementById("wallet");
 wallets.forEach(w => {
-  let opt = document.createElement("option");
-  opt.value = w;
-  opt.textContent = w;
-  walletSelect.appendChild(opt);
+  let o = document.createElement("option");
+  o.value = w;
+  o.textContent = w;
+  walletSelect.appendChild(o);
 });
 
-let selectedCategory = "";
-let selectedDate = new Date().toISOString().split("T")[0];
+document.getElementById("date").value =
+  new Date().toISOString().split("T")[0];
 
-document.getElementById("dateDisplay").innerText = selectedDate;
+let currentGroup = null;
+let selectedCategory = "";
 
 // ===== CATEGORY =====
 function openCategory() {
-  document.getElementById("categoryModal").classList.add("active");
+  document.getElementById("modal").classList.add("active");
   renderGroups();
 }
 
-function closeCategory() {
-  document.getElementById("categoryModal").classList.remove("active");
+function closeModal() {
+  document.getElementById("modal").classList.remove("active");
+  currentGroup = null;
+}
+
+function goBack() {
+  if (currentGroup) {
+    currentGroup = null;
+    renderGroups();
+  } else {
+    closeModal();
+  }
 }
 
 function renderGroups() {
-  const list = document.getElementById("categoryList");
+  const list = document.getElementById("list");
   list.innerHTML = "";
 
   Object.keys(categories).forEach(group => {
     let div = document.createElement("div");
     div.className = "list-item";
     div.textContent = group;
-    div.onclick = () => renderItems(group);
+    div.onclick = () => {
+      currentGroup = group;
+      renderItems();
+    };
     list.appendChild(div);
   });
 }
 
-function renderItems(group) {
-  const list = document.getElementById("categoryList");
+function renderItems() {
+  const list = document.getElementById("list");
   list.innerHTML = "";
 
-  categories[group].forEach(item => {
+  categories[currentGroup].forEach(item => {
     let div = document.createElement("div");
     div.className = "list-item";
     div.textContent = item;
     div.onclick = () => {
       selectedCategory = item;
       document.getElementById("categoryDisplay").innerText = item;
-      closeCategory();
+      closeModal();
     };
     list.appendChild(div);
   });
@@ -169,8 +192,13 @@ function renderItems(group) {
 // SEARCH
 document.getElementById("search").addEventListener("input", e => {
   let term = e.target.value.toLowerCase();
-  const list = document.getElementById("categoryList");
+  const list = document.getElementById("list");
   list.innerHTML = "";
+
+  if (!term) {
+    currentGroup ? renderItems() : renderGroups();
+    return;
+  }
 
   Object.entries(categories).forEach(([group, items]) => {
     items.forEach(item => {
@@ -181,7 +209,7 @@ document.getElementById("search").addEventListener("input", e => {
         div.onclick = () => {
           selectedCategory = item;
           document.getElementById("categoryDisplay").innerText = item;
-          closeCategory();
+          closeModal();
         };
         list.appendChild(div);
       }
@@ -189,28 +217,20 @@ document.getElementById("search").addEventListener("input", e => {
   });
 });
 
-// ===== DATE =====
-function openDate() {
-  document.getElementById("dateModal").classList.add("active");
-}
-
-function confirmDate() {
-  selectedDate = document.getElementById("datePicker").value;
-  document.getElementById("dateDisplay").innerText = selectedDate;
-  document.getElementById("dateModal").classList.remove("active");
-}
-
-// ===== REVIEW =====
-function review() {
+// ===== SUBMIT =====
+function submit() {
   let value = parseFloat(document.getElementById("value").value);
   let desc = document.getElementById("description").value;
+  let date = document.getElementById("date").value;
   let wallet = document.getElementById("wallet").value;
 
   if (!value || value <= 0) return alert("Valor inválido");
   if (!desc) return alert("Descrição obrigatória");
-  if (!selectedDate) return alert("Data obrigatória");
+  if (!date) return alert("Data obrigatória");
   if (!selectedCategory) return alert("Categoria obrigatória");
   if (!wallet) return alert("Carteira obrigatória");
+
+  value = Math.round(value * 100) / 100;
 
   fetch(API_URL, {
     method: "POST",
@@ -219,7 +239,7 @@ function review() {
       key: SECRET_KEY,
       value,
       description: desc,
-      date: selectedDate,
+      date,
       category: selectedCategory,
       wallet
     })
