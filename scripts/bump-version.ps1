@@ -7,7 +7,8 @@ if (-not (Test-Path -LiteralPath $targetFile)) {
   throw "Could not find index.html at $targetFile"
 }
 
-$content = Get-Content -LiteralPath $targetFile -Raw
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+$content = [System.IO.File]::ReadAllText($targetFile, $utf8NoBom)
 $pattern = 'const APP_VERSION = "(\d+)\.(\d+)\.(\d+)";'
 $match = [regex]::Match($content, $pattern)
 
@@ -21,7 +22,6 @@ $patch = [int]$match.Groups[3].Value + 1
 $nextVersion = "$major.$minor.$patch"
 $replacement = "const APP_VERSION = `"$nextVersion`";"
 $updatedContent = [regex]::Replace($content, $pattern, $replacement, 1)
-$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
 [System.IO.File]::WriteAllText($targetFile, $updatedContent, $utf8NoBom)
 Write-Output "Bumped version to $nextVersion"
