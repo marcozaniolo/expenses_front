@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+
+branch="$(git rev-parse --abbrev-ref HEAD)"
+if [ "$branch" != "main" ]; then
+  exit 0
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+script_path="$repo_root/scripts/bump-version.ps1"
+
+if [ ! -f "$script_path" ]; then
+  echo "Missing version bump script: $script_path" >&2
+  exit 1
+fi
+
+powershell.exe -ExecutionPolicy Bypass -File "$script_path"
+git add -- index.html
