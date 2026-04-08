@@ -121,14 +121,155 @@ button {
 // ===== CONFIG =====
 const API_URL = "YOUR_API_URL_HERE";
 const SECRET_KEY = "YOUR_SECRET_KEY";
-const APP_VERSION = "0.0.5";
+const APP_VERSION = "0.0.6";
 
 // EDIT
 const wallets = ["Conta 1", "Conta 2"];
 
 const categories = {
-  "Alimentacao": ["Restaurante", "Mercado"],
-  "Transporte": ["Uber", "Combustivel"]
+  "AlimentaÃ§Ã£o": [
+    "AÃ§ougue",
+    "AlmoÃ§o",
+    "Bebidas",
+    "CafÃ©/Lanches",
+    "Delivery/take away",
+    "Feira",
+    "Guloseimas",
+    "Padaria",
+    "Restaurante",
+    "Supermercado"
+  ],
+
+  "Animal de EstimaÃ§Ã£o": [
+    "Pet Shop",
+    "RaÃ§Ã£o",
+    "RemÃ©dio - pet",
+    "VeterinÃ¡rio"
+  ],
+
+  "Casa": [
+    "Ãgua",
+    "Alarme",
+    "Aluguel",
+    "CondomÃ­nio",
+    "Empregada DomÃ©stica",
+    "GÃ¡s",
+    "Internet",
+    "Jardim",
+    "Lavanderia",
+    "Luz",
+    "ManutenÃ§Ã£o da Casa",
+    "Materiais de Limpeza",
+    "Telefone",
+    "TV por assinatura"
+  ],
+
+  "CrianÃ§as": [
+    "Fraldas"
+  ],
+
+  "EducaÃ§Ã£o": [
+    "Cursos",
+    "Escola",
+    "Faculdade",
+    "Livraria",
+    "Material Escolar",
+    "PÃ³s-GraduaÃ§Ã£o"
+  ],
+
+  "Gastos EsporÃ¡dicos": [
+    "DoaÃ§Ãµes",
+    "EletrÃ´nicos",
+    "MÃ³veis e decoraÃ§Ã£o",
+    "Presentes",
+    "UtensÃ­lios DomÃ©sticos"
+  ],
+
+  "Gastos Pessoais": [
+    "Academia",
+    "AcessÃ³rios",
+    "Celular",
+    "Corte Cabelo",
+    "DÃ­zimo",
+    "Perfumaria",
+    "Roupas e CalÃ§ados",
+    "SalÃ£o de Beleza"
+  ],
+
+  "Impostos": [
+    "FGTS",
+    "INSS",
+    "IOF",
+    "IPTU",
+    "IPVA",
+    "IR"
+  ],
+
+  "Lazer": [
+    "Bar/Balada",
+    "Cinema/Teatro/Show",
+    "Futebol",
+    "Outros Esportes",
+    "Passeios",
+    "Viagens"
+  ],
+
+  "Receita": [
+    "13Âº SalÃ¡rio",
+    "BÃ´nus",
+    "ComissÃ£o",
+    "Estorno",
+    "FÃ©rias",
+    "HonorÃ¡rios",
+    "Juros de Investimentos",
+    "Outras Receitas",
+    "Reembolso",
+    "SalÃ¡rio"
+  ],
+
+  "SaÃºde": [
+    "Dentista",
+    "Exames",
+    "FarmÃ¡cia",
+    "MÃ©dico",
+    "Plano de SaÃºde"
+  ],
+
+  "Seguros": [
+    "Seguro de Vida",
+    "Seguro do Carro",
+    "Seguro Residencial"
+  ],
+
+  "ServiÃ§os": [
+    "Advogado",
+    "App",
+    "Clube",
+    "Contador"
+  ],
+
+  "ServiÃ§os Financeiros": [
+    "Anuidade CartÃ£o",
+    "ConsÃ³rcio",
+    "Juros de EmprÃ©stimo",
+    "Multas",
+    "Seguro de CartÃ£o de CrÃ©dito",
+    "Tarifas bancÃ¡rias",
+    "TÃ­tulo de CapitalizaÃ§Ã£o"
+  ],
+
+  "Transporte": [
+    "CombustÃ­vel",
+    "Estacionamento",
+    "IPVA/licenciamento",
+    "Lavagem do Carro",
+    "ManutenÃ§Ã£o do Carro",
+    "MetrÃ´/Ã”nibus",
+    "Multas de TrÃ¢nsito",
+    "PedÃ¡gio",
+    "TÃ¡xi",
+    "Transporte por App"
+  ]
 };
 
 // ===== INIT =====
