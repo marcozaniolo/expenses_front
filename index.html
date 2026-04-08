@@ -27,6 +27,24 @@ body {
   text-align: center;
 }
 
+.response-box {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fafafa;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 14px;
+  color: #222;
+}
+
+.response-box.error {
+  border-color: #d33;
+  background: #fff5f5;
+  color: #a00;
+}
+
 input, select, button {
   width: 100%;
   padding: 14px;
@@ -100,6 +118,8 @@ button {
 
   <button onclick="submit()">Salvar</button>
 
+  <div id="responseBox" class="response-box">A resposta do POST vai aparecer aqui.</div>
+
   <div class="version">Version <span id="versionLabel"></span></div>
 </div>
 
@@ -121,7 +141,7 @@ button {
 // ===== CONFIG =====
 const API_URL = "https://script.google.com/macros/s/AKfycbzujFyjUlII0ialDfciz2HWUZjuyw0jBxQfVpsD5HWn_hCiHcNemKOrWIzb_DNC0Es/exec";
 const SECRET_KEY = "my_super_secret_key";
-const APP_VERSION = "0.0.9";
+const APP_VERSION = "0.0.10";
 
 // EDIT
 const wallets = ["Conta 1", "Conta 2"];
@@ -287,6 +307,12 @@ document.getElementById("versionLabel").innerText = `v${APP_VERSION}`;
 
 let currentGroup = null;
 let selectedCategory = "";
+const responseBox = document.getElementById("responseBox");
+
+function showResponse(message, isError = false) {
+  responseBox.innerText = message;
+  responseBox.classList.toggle("error", isError);
+}
 
 // ===== CATEGORY =====
 function openCategory() {
@@ -370,7 +396,7 @@ document.getElementById("search").addEventListener("input", e => {
 });
 
 // ===== SUBMIT =====
-function submit() {
+async function submit() {
   let value = parseFloat(document.getElementById("value").value);
   let desc = document.getElementById("description").value;
   let date = document.getElementById("date").value;
@@ -384,20 +410,39 @@ function submit() {
 
   value = Math.round(value * 100) / 100;
 
-  fetch(API_URL, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      key: SECRET_KEY,
-      value,
-      description: desc,
-      date,
-      category: selectedCategory,
-      wallet
-    })
-  });
+  showResponse("Enviando...");
 
-  alert("Salvo!");
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        key: SECRET_KEY,
+        value,
+        description: desc,
+        date,
+        category: selectedCategory,
+        wallet
+      })
+    });
+
+    const rawText = await response.text();
+    let formattedResponse = rawText;
+
+    try {
+      formattedResponse = JSON.stringify(JSON.parse(rawText), null, 2);
+    } catch (error) {
+    }
+
+    if (!response.ok) {
+      showResponse(`Erro ${response.status}:\n${formattedResponse}`, true);
+      return;
+    }
+
+    showResponse(`Status: ${response.status}\n${formattedResponse}`);
+  } catch (error) {
+    showResponse(`Falha ao enviar:\n${error.message}`, true);
+  }
 }
 </script>
 
