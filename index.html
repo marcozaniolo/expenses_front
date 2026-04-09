@@ -141,7 +141,7 @@ button {
 // ===== CONFIG =====
 const API_URL = "https://script.google.com/macros/s/AKfycbzujFyjUlII0ialDfciz2HWUZjuyw0jBxQfVpsD5HWn_hCiHcNemKOrWIzb_DNC0Es/exec";
 const SECRET_KEY = "my_super_secret_key";
-const APP_VERSION = "0.0.10";
+const APP_VERSION = "0.0.11";
 
 // EDIT
 const wallets = ["Conta 1", "Conta 2"];
@@ -413,33 +413,28 @@ async function submit() {
   showResponse("Enviando...");
 
   try {
+    const payloadData = {
+      key: SECRET_KEY,
+      value: String(value),
+      description: desc,
+      date,
+      category: selectedCategory,
+      wallet
+    };
+    const payload = new URLSearchParams(payloadData);
+
     const response = await fetch(API_URL, {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        key: SECRET_KEY,
-        value,
-        description: desc,
-        date,
-        category: selectedCategory,
-        wallet
-      })
+      mode: "no-cors",
+      body: payload
     });
 
-    const rawText = await response.text();
-    let formattedResponse = rawText;
-
-    try {
-      formattedResponse = JSON.stringify(JSON.parse(rawText), null, 2);
-    } catch (error) {
-    }
-
-    if (!response.ok) {
-      showResponse(`Erro ${response.status}:\n${formattedResponse}`, true);
+    if (response.type === "opaque" || response.ok) {
+      showResponse("Transacao aceita.");
       return;
     }
 
-    showResponse(`Status: ${response.status}\n${formattedResponse}`);
+    showResponse("Nao foi possivel confirmar a transacao.", true);
   } catch (error) {
     showResponse(`Falha ao enviar:\n${error.message}`, true);
   }

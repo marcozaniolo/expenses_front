@@ -20,7 +20,7 @@ This project allows you to quickly log expenses from your phone and store them i
 
 ```
 User (Mobile Web App)
-        ↓ POST (JSON)
+        ↓ POST (form fields)
 Google Apps Script (API)
         ↓
 Google Sheets (Database)
@@ -55,15 +55,13 @@ Fields:
 
 ## Example Request
 
-```json
-{
-  "key": "YOUR_SECRET_KEY",
-  "value": 25.50,
-  "description": "Lunch",
-  "date": "2026-04-08",
-  "category": "Restaurante",
-  "wallet": "Conta 1"
-}
+```text
+key=YOUR_SECRET_KEY
+value=25.50
+description=Lunch
+date=2026-04-08
+category=Restaurante
+wallet=Conta 1
 ```
 
 ---
@@ -79,24 +77,27 @@ Receives POST requests and appends data to Google Sheets.
 ```javascript
 function doPost(e) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1");
-  
-  const data = JSON.parse(e.postData.contents);
   const SECRET = "YOUR_SECRET_KEY";
+  const data = e.parameter || {};
 
   if (data.key !== SECRET) {
-    return ContentService.createTextOutput("Unauthorized");
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: "Unauthorized" }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 
   sheet.appendRow([
     new Date(),
     data.date,
-    data.value,
+    Number(data.value),
     data.description,
     data.category,
     data.wallet
   ]);
 
-  return ContentService.createTextOutput("Success");
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true, message: "Success" }))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 ```
 
