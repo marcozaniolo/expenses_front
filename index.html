@@ -125,7 +125,7 @@ button {
   <button onclick="openCategory()">Selecionar Categoria</button>
   <div id="categoryDisplay"></div>
 
-  <button onclick="submit()">Salvar</button>
+  <button id="submitButton" onclick="submit()">Salvar</button>
 
   <div id="responseBox" class="response-box">A resposta do POST vai aparecer aqui.</div>
 
@@ -149,11 +149,11 @@ button {
 <script>
 // ===== CONFIG =====
 const API_URL = "https://script.google.com/macros/s/AKfycbzujFyjUlII0ialDfciz2HWUZjuyw0jBxQfVpsD5HWn_hCiHcNemKOrWIzb_DNC0Es/exec";
-const SECRET_KEY = "my_super_secret_key";
-const APP_VERSION = "0.0.13";
+const SECRET_KEY = new URLSearchParams(window.location.search).get("key") || "";
+const APP_VERSION = "0.0.14";
 
 // EDIT
-const wallets = ["Conta 1", "Conta 2"];
+const wallets = ["Brad Credito", "Brad Conta", "Sant Credito", "Sant Conta", "Flash", "Splitwise"];
 
 const categories = {
   "Alimentação": [
@@ -318,6 +318,7 @@ let currentGroup = null;
 let selectedCategory = "";
 const responseBox = document.getElementById("responseBox");
 const valueInput = document.getElementById("value");
+const submitButton = document.getElementById("submitButton");
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2
@@ -326,6 +327,15 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 function showResponse(message, isError = false) {
   responseBox.innerText = message;
   responseBox.classList.toggle("error", isError);
+}
+
+function applySecretKeyState() {
+  if (SECRET_KEY) {
+    return;
+  }
+
+  submitButton.disabled = true;
+  showResponse("Link invalido: abra a pagina com ?key=SEU_SEGREDO na URL.", true);
 }
 
 function sanitizeValueInput(rawValue) {
@@ -388,6 +398,8 @@ valueInput.addEventListener("blur", e => {
 
   e.target.value = formatLocalizedValue(parsedValue);
 });
+
+applySecretKeyState();
 
 // ===== CATEGORY =====
 function openCategory() {
@@ -472,6 +484,11 @@ document.getElementById("search").addEventListener("input", e => {
 
 // ===== SUBMIT =====
 async function submit() {
+  if (!SECRET_KEY) {
+    showResponse("Link invalido: chave ausente na URL.", true);
+    return;
+  }
+
   let value = parseLocalizedValue(valueInput.value);
   let desc = document.getElementById("description").value;
   let date = document.getElementById("date").value;
