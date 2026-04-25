@@ -51,6 +51,8 @@ input, select, button {
   margin-top: 12px;
   border-radius: 10px;
   border: 1px solid #ddd;
+  font: inherit;
+  font-size: 16px;
 }
 
 button {
@@ -101,7 +103,14 @@ button {
 
 <div class="card">
 
-  <input id="value" type="number" step="0.01" placeholder="Valor (R$)">
+  <input
+    id="value"
+    type="text"
+    inputmode="decimal"
+    autocomplete="off"
+    pattern="[0-9.,]*"
+    placeholder="Valor (R$)"
+  >
   <input id="description" placeholder="Descricao">
 
   <!-- Date inline -->
@@ -141,7 +150,7 @@ button {
 // ===== CONFIG =====
 const API_URL = "https://script.google.com/macros/s/AKfycbzujFyjUlII0ialDfciz2HWUZjuyw0jBxQfVpsD5HWn_hCiHcNemKOrWIzb_DNC0Es/exec";
 const SECRET_KEY = "my_super_secret_key";
-const APP_VERSION = "0.0.11";
+const APP_VERSION = "0.0.13";
 
 // EDIT
 const wallets = ["Conta 1", "Conta 2"];
@@ -308,11 +317,77 @@ document.getElementById("versionLabel").innerText = `v${APP_VERSION}`;
 let currentGroup = null;
 let selectedCategory = "";
 const responseBox = document.getElementById("responseBox");
+const valueInput = document.getElementById("value");
+const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
 
 function showResponse(message, isError = false) {
   responseBox.innerText = message;
   responseBox.classList.toggle("error", isError);
 }
+
+function sanitizeValueInput(rawValue) {
+  const cleaned = rawValue.replace(/[^\d,.\s]/g, "").replace(/\s+/g, "");
+  const firstCommaIndex = cleaned.indexOf(",");
+
+  if (firstCommaIndex === -1) {
+    return cleaned;
+  }
+
+  const integerPart = cleaned.slice(0, firstCommaIndex).replace(/,/g, "");
+  const decimalPart = cleaned.slice(firstCommaIndex + 1).replace(/[.,]/g, "");
+
+  return `${integerPart},${decimalPart}`;
+}
+
+function parseLocalizedValue(rawValue) {
+  const sanitized = sanitizeValueInput(rawValue);
+
+  if (!sanitized) {
+    return NaN;
+  }
+
+  const parts = sanitized.split(",");
+  if (parts.length > 2) {
+    return NaN;
+  }
+
+  const integerPart = (parts[0] || "").replace(/\./g, "");
+  const decimalPart = parts[1] || "";
+  const normalizedValue = decimalPart
+    ? `${integerPart || "0"}.${decimalPart}`
+    : integerPart;
+
+  if (!/^\d+(\.\d+)?$/.test(normalizedValue)) {
+    return NaN;
+  }
+
+  return Number(normalizedValue);
+}
+
+function formatLocalizedValue(value) {
+  return currencyFormatter.format(value);
+}
+
+valueInput.addEventListener("input", e => {
+  const sanitizedValue = sanitizeValueInput(e.target.value);
+
+  if (e.target.value !== sanitizedValue) {
+    e.target.value = sanitizedValue;
+  }
+});
+
+valueInput.addEventListener("blur", e => {
+  const parsedValue = parseLocalizedValue(e.target.value);
+
+  if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+    return;
+  }
+
+  e.target.value = formatLocalizedValue(parsedValue);
+});
 
 // ===== CATEGORY =====
 function openCategory() {
@@ -397,7 +472,7 @@ document.getElementById("search").addEventListener("input", e => {
 
 // ===== SUBMIT =====
 async function submit() {
-  let value = parseFloat(document.getElementById("value").value);
+  let value = parseLocalizedValue(valueInput.value);
   let desc = document.getElementById("description").value;
   let date = document.getElementById("date").value;
   let wallet = document.getElementById("wallet").value;
@@ -409,6 +484,7 @@ async function submit() {
   if (!wallet) return alert("Carteira obrigatoria");
 
   value = Math.round(value * 100) / 100;
+  valueInput.value = formatLocalizedValue(value);
 
   showResponse("Enviando...");
 
